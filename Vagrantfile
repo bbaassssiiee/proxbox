@@ -6,6 +6,8 @@ Vagrant.configure("2") do |config|
   # For a complete reference, please see the online documentation at
   # https://docs.vagrantup.com.
 
+  if Vagrant.has_plugin?("vagrant-vbguest")
+    config.vbguest.auto_update = true
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
   config.vm.box = "clincha/proxmox-ve-8"
@@ -35,12 +37,6 @@ Vagrant.configure("2") do |config|
   # your network.
   config.vm.network "public_network", type: "dhcp", bridge: "en0: Wi-Fi"
 
-  # Share an additional folder to the guest VM. The first argument is
-  # the path on the host to the actual folder. The second argument is
-  # the path on the guest to mount the folder. And the optional third
-  # argument is a set of non-required options.
-  config.vm.synced_folder "vagrant", "/vagrant"
-
   # Disable the default share of the current code directory. Doing this
   # provides improved isolation between the vagrant box and your host
   # by making sure your Vagrantfile isn't accessible to the vagrant box.
@@ -48,25 +44,34 @@ Vagrant.configure("2") do |config|
   # shown above.
   config.vm.synced_folder ".", "/vagrant", disabled: true
   config.vm.hostname = "pve"
-  config.vm.provider "virtualbox" do |vb|
-    vb.name = "pve"
-    vb.gui = false
-    vb.default_nic_type = "82540em"
-    vb.customize ["modifyvm", :id,
-      "--audio", "none",
-      "--cpus", 8,
-      "--firmware", "EFI",
-      "--memory", 32768,
-      "--graphicscontroller", "VMSVGA",
-      "--vram", "64",
-      "--vrde", "on"
-    ]
-    vb.customize ["storageattach", :id,
-      "--device", "0",
-      "--medium", "emptydrive",
-      "--port", "1",
-      "--storagectl", "IDE Controller",
-      "--type", "dvddrive"
-    ]
+  config.vm.define "pve" do |pve|
+    pve.vm.provider "virtualbox" do |vb|
+      vb.gui = false
+      vb.default_nic_type = "82540em"
+      vb.customize ["modifyvm", :id,
+        "--audio-driver", "none",
+        "--cpus", 8,
+        "--firmware", "EFI",
+        "--macaddress2", "00C0DEDEC0DE",
+        "--memory", 32768,
+        "--name", "pve",
+        "--graphicscontroller", "VMSVGA",
+        "--vram", "64",
+        "--vrde", "on"
+      ]
+      vb.customize ["storageattach", :id,
+        "--device", "0",
+        "--medium", "emptydrive",
+        "--port", "1",
+        "--storagectl", "IDE Controller",
+        "--type", "dvddrive"
+      ]
+    end
+  end
+  config.vm.provision :ansible do |ansible|
+    ansible.compatibility_mode = "2.0"
+    ansible.playbook = "ansible/playbook.yml"
+    ansible.verbose = "vv"
+    end
   end
 end
