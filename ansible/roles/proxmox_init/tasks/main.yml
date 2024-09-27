@@ -1,0 +1,15 @@
+---
+
+- name: Update repository cache
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install tools
+  ansible.builtin.apt:
+    name:
+      - libguestfs-tools
+      - python3-proxmoxer
+    state: "{{ desired_state | default('latest') }}"
+  tags:
+    - packages

@@ -1,0 +1,16 @@
+- name: Selecting public ssh key
+  delegate_to: localhost
+  run_once: true
+  ansible.builtin.set_fact:
+    pub_key: "{{ item }}"
+  with_first_found:
+    - "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519.pub"
+    - "{{ lookup('env', 'HOME') }}/.ssh/id_rsa.pub"
+
+- name: Templates Management
+  ansible.builtin.include_tasks:
+    file: make_template.yml
+  loop: "{{ vm_templates }}"
+  loop_control:
+    loop_var: input
+  when: vm_templates | length >= 1

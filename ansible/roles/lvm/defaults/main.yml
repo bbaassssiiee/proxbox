@@ -1,0 +1,13 @@
+---
+# Dictionary for logical volume management
+disks_settings:
+  - vgname: pve
+    pvname:
+      - /dev/sda3
+      - /dev/sdb
+
+lvm_settings:
+  - vgname: pve
+    lv_name: root
+    lv_size: +100%FREE
+    lvpath: /dev/mapper/pve-root
