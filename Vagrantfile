@@ -53,7 +53,11 @@ Vagrant.configure("2") do |config|
         "--cpus", 8,
         "--firmware", "EFI",
         "--macaddress2", "00C0DEDEC0DE",
+<<<<<<< HEAD
         "--memory", 16384,
+=======
+        "--memory", 32768,
+>>>>>>> 62f26c6 (Proxmox in VirtualBox on macOS)
         "--name", "pve",
         "--graphicscontroller", "VMSVGA",
         "--vram", "64",
