@@ -1,0 +1,24 @@
+#!/usr/bin/env ansible-playbook -v
+---
+
+- name: Ansible Playbook
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Setup
+      ansible.builtin.setup:
+
+    - name: Report
+      ansible.builtin.debug:
+        msg: "{{ ansible_facts }}"
+
+    - name: Services
+      ansible.builtin.service_facts:
+      register: services
+
+    - name: Report
+      ansible.builtin.debug:
+        msg: "{{ services }}"
+
