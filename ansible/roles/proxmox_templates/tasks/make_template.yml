@@ -1,0 +1,80 @@
+- name: Download VM image
+  ansible.builtin.get_url:
+    url: '{{ input.image_url }}'
+    dest: '{{ base_path }}/{{ input.image_name }}'
+
+- name: Check if image is already customized
+  ansible.builtin.command:
+    cmd: 'virt-cat -a {{ base_path }}/{{ input.image_name }} /etc/sudoers.d/ansible'
+  register: image_customized
+  ignore_errors: true
+
+- name: Customize the image
+  when: image_customized.rc != 0
+  block:
+  - name: Customize the image
+    ansible.builtin.command:
+      cmd: 'virt-customize -a {{ base_path }}/{{ input.image_name }} {{ item }}'
+    with_items:
+      - --update
+      - --install qemu-guest-agent
+      - --run-command 'useradd --shell /bin/bash ansible'
+      - --run-command 'mkdir -p /home/ansible/.ssh'
+      - "--ssh-inject ansible:string:'{{ lookup('file', pub_key) }}'"
+      - --run-command 'chown -R ansible:ansible /home/ansible'
+      - "--write /etc/sudoers.d/ansible:'ansible ALL=(ALL) NOPASSWD: ALL'"
+      - --run-command 'chmod 0440 /etc/sudoers.d/ansible'
+      - --run-command 'chown root:root /etc/sudoers.d/ansible'
+      - --run-command '>/etc/machine-id'
+  rescue:
+    # Don't let a failed customization leave the image behind
+    - name: Remove the image
+      ansible.builtin.file:
+        path: '{{ base_path }}/{{ input.image_name }}'
+        state: absent
+    - name: Fail the task
+      ansible.builtin.fail:
+        msg: 'Failed to customize the image'
+
+- name: Check if VM exists
+  ansible.builtin.command:
+    cmd: 'qm status {{ input.vm_id }}'
+  register: vm_status
+  ignore_errors: true
+
+- name: Create VM
+  when: vm_status.rc != 0
+  block:
+    - name: Create VM
+      ansible.builtin.command:
+        cmd: >
+          qm create {{ input.vm_id }} --name {{ input.vm_name }} --memory {{ input.vm_memory }}
+          --cores {{ input.vm_cores }} --net0 virtio,bridge={{ input.vm_bridge }}
+
+    - name: Import disk to VM
+      ansible.builtin.command:
+        cmd: 'qm importdisk {{ input.vm_id }} {{ base_path }}/{{ input.image_name }} {{ input.vm_storage }}'
+
+    - name: Set VM SCSI hardware and disk
+      ansible.builtin.command:
+        cmd: 'qm set {{ input.vm_id }} --scsihw virtio-scsi-pci --scsi0 {{ input.vm_storage }}:{{ input.vm_id }}/vm-{{ input.vm_id }}-disk-0.raw'
+
+    - name: Set VM boot options
+      ansible.builtin.command:
+        cmd: 'qm set {{ input.vm_id }} --boot c --bootdisk scsi0'
+
+    - name: Add Cloud-Init drive
+      ansible.builtin.command:
+        cmd: 'qm set {{ input.vm_id }} --ide2 {{ input.vm_storage }}:cloudinit'
+
+    - name: Configure serial console
+      ansible.builtin.command:
+        cmd: 'qm set {{ input.vm_id }} --serial0 socket --vga serial0'
+
+    - name: Enable QEMU guest agent
+      ansible.builtin.command:
+        cmd: 'qm set {{ input.vm_id }} --agent enabled=1'
+
+    - name: Convert VM to template
+      ansible.builtin.command:
+        cmd: 'qm template {{ input.vm_id }}'

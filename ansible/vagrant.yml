@@ -7,112 +7,22 @@
   gather_facts: true
 
   tasks:
-    - name: Update repository cache
-      ansible.builtin.apt:
-        update_cache: yes
-        cache_valid_time: 3600
 
-    - name: Install tools
-      ansible.builtin.apt:
-        name:
-          - libguestfs-tools
-          - python3-proxmoxer
-        state: "{{ desired_state | default('latest') }}"
-      tags:
-        - packages
 
-    - name: LVM role
+    - name: Logical volume management
       ansible.builtin.include_role:
         name: lvm
       tags:
         - lvm
 
-    - name: Download Ubuntu image
-      ansible.builtin.get_url:
-        url: '{{ ubuntu_image_url }}'
-        dest: '{{ base_path }}/{{ ubuntu_image_name }}'
+    - name: Initialize Proxmox
+      ansible.builtin.include_role:
+        name: proxmox_init
+      tags:
+        - init
 
-    - name: Selecting public ssh key
-      delegate_to: localhost
-      run_once: true
-      ansible.builtin.set_fact:
-        pub_key: "{{ item }}"
-      with_first_found:
-        - "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519.pub"
-        - "{{ lookup('env', 'HOME') }}/.ssh/id_rsa.pub"
-
-    - name: Check if image is already customized
-      ansible.builtin.command:
-        cmd: 'virt-cat -a {{ base_path }}/{{ ubuntu_image_name }} /etc/sudoers.d/ansible'
-      register: image_customized
-      ignore_errors: true
-
-    - name: Customize the image
-      when: image_customized.rc != 0
-      block:
-      - name: Customize the image
-        ansible.builtin.command:
-          cmd: 'virt-customize -a {{ base_path }}/{{ ubuntu_image_name }} {{ item }}'
-        with_items:
-          - --update
-          - --install qemu-guest-agent
-          - --run-command 'useradd --shell /bin/bash ansible'
-          - --run-command 'mkdir -p /home/ansible/.ssh'
-          - "--ssh-inject ansible:string:'{{ lookup('file', pub_key) }}'"
-          - --run-command 'chown -R ansible:ansible /home/ansible'
-          - "--write /etc/sudoers.d/ansible:'ansible ALL=(ALL) NOPASSWD: ALL'"
-          - --run-command 'chmod 0440 /etc/sudoers.d/ansible'
-          - --run-command 'chown root:root /etc/sudoers.d/ansible'
-          - --run-command '>/etc/machine-id'
-      rescue:
-        # Don't let a failed customization leave the image behind
-        - name: Remove the image
-          ansible.builtin.file:
-            path: '{{ base_path }}/{{ ubuntu_image_name }}'
-            state: absent
-        - name: Fail the task
-          ansible.builtin.fail:
-            msg: 'Failed to customize the image'
-
-    - name: Check if VM exists
-      ansible.builtin.command:
-        cmd: 'qm status {{ vm_id }}'
-      register: vm_status
-      ignore_errors: true
-
-    - name: Create VM
-      when: vm_status.rc != 0
-      block:
-        - name: Create VM
-          ansible.builtin.command:
-            cmd: >
-              qm create {{ vm_id }} --name {{ vm_name }} --memory {{ vm_memory }}
-              --cores {{ vm_cores }} --net0 virtio,bridge={{ vm_bridge }}
-
-        - name: Import disk to VM
-          ansible.builtin.command:
-            cmd: 'qm importdisk {{ vm_id }} {{ base_path }}/{{ ubuntu_image_name }} {{ vm_storage }}'
-
-        - name: Set VM SCSI hardware and disk
-          ansible.builtin.command:
-            cmd: 'qm set {{ vm_id }} --scsihw virtio-scsi-pci --scsi0 {{ vm_storage }}:{{ vm_id }}/vm-{{ vm_id }}-disk-0.raw'
-
-        - name: Set VM boot options
-          ansible.builtin.command:
-            cmd: 'qm set {{ vm_id }} --boot c --bootdisk scsi0'
-
-        - name: Add Cloud-Init drive
-          ansible.builtin.command:
-            cmd: 'qm set {{ vm_id }} --ide2 {{ vm_storage }}:cloudinit'
-
-        - name: Configure serial console
-          ansible.builtin.command:
-            cmd: 'qm set {{ vm_id }} --serial0 socket --vga serial0'
-
-        - name: Enable QEMU guest agent
-          ansible.builtin.command:
-            cmd: 'qm set {{ vm_id }} --agent enabled=1'
-
-        - name: Convert VM to template
-          ansible.builtin.command:
-            cmd: 'qm template {{ vm_id }}'
+    - name: Create Proxmox VM template
+      ansible.builtin.include_role:
+        name: proxmox_templates
+      tags:
+        - template
