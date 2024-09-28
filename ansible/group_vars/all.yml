@@ -1,0 +1,11 @@
+---
+# proxmox
+base_path: '/root'
+ubuntu_image_name: 'noble-server-cloudimg-amd64.img'
+ubuntu_image_url: 'https://cloud-images.ubuntu.com/noble/current/{{ ubuntu_image_name }}'
+vm_id: 100
+vm_name: 'ubuntu-noble-cloudinit-template'
+vm_memory: 2048
+vm_cores: 2
+vm_bridge: 'vmbr1'
+vm_storage: 'local-lvm'

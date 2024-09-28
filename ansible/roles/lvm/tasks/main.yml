@@ -1,0 +1,16 @@
+---
+
+- name: Extending the Volume Group
+  community.general.lvg:
+    vg: "{{ item.vgname }}"
+    pvs: "{{ item.pvname }}"
+    pvresize: true
+  with_items: "{{ disks_settings }}"
+
+- name: Increasing the filesystems
+  community.general.lvol:
+    vg: "{{ item.vgname }}"
+    lv: "{{ item.lv_name }}"
+    size: "{{ item.lv_size }}"
+    resizefs: true
+  with_items: "{{ lvm_settings }}"

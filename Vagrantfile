@@ -26,7 +26,7 @@ Vagrant.configure("2") do |config|
   # Create a forwarded port mapping which allows access to a specific port
   # within the machine from a port on the host machine and only allow access
   # via 127.0.0.1 to disable public access
-  # config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
+  # config.vm.network "forwarded_port", guest: 8006, host: 8006, host_ip: "127.0.0.1"
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
@@ -36,7 +36,7 @@ Vagrant.configure("2") do |config|
   # Bridged networks make the machine appear as another physical device on
   # your network.
   config.vm.network "public_network", type: "dhcp", bridge: "en0: Wi-Fi"
-
+  config.vm.disk :disk, name: "proxmox", size: "100GB"
   # Disable the default share of the current code directory. Doing this
   # provides improved isolation between the vagrant box and your host
   # by making sure your Vagrantfile isn't accessible to the vagrant box.
@@ -53,7 +53,7 @@ Vagrant.configure("2") do |config|
         "--cpus", 8,
         "--firmware", "EFI",
         "--macaddress2", "00C0DEDEC0DE",
-        "--memory", 32768,
+        "--memory", 16384,
         "--name", "pve",
         "--graphicscontroller", "VMSVGA",
         "--vram", "64",
@@ -70,8 +70,8 @@ Vagrant.configure("2") do |config|
   end
   config.vm.provision :ansible do |ansible|
     ansible.compatibility_mode = "2.0"
-    ansible.playbook = "ansible/playbook.yml"
-    ansible.verbose = "vv"
+    ansible.playbook = "ansible/vagrant.yml"
+    ansible.verbose = "v"
     end
   end
 end

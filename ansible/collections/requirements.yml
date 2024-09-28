@@ -1,0 +1,6 @@
+---
+# ansible collections from https://galaxy.ansible.com
+collections:
+  - name: ansible.posix
+  - name: ansible.utils
+  - name: community.general
