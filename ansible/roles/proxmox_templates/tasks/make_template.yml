@@ -57,7 +57,9 @@
 
     - name: Set VM SCSI hardware and disk
       ansible.builtin.command:
-        cmd: 'qm set {{ input.vm_id }} --scsihw virtio-scsi-pci --scsi0 {{ input.vm_storage }}:{{ input.vm_id }}/vm-{{ input.vm_id }}-disk-0.raw'
+        # cmd: 'qm set {{ input.vm_id }} --scsihw virtio-scsi-pci --scsi0 {{ input.vm_storage }}:{{ input.vm_id }}/vm-{{ input.vm_id }}-disk-0.raw'
+        # For lvm-local
+        cmd: 'qm set {{ input.vm_id }} --scsihw virtio-scsi-pci --scsi0 {{ input.vm_storage }}:vm-{{ input.vm_id }}-disk-0'
 
     - name: Set VM boot options
       ansible.builtin.command:
