@@ -23,6 +23,6 @@
 
     - name: Create Proxmox VM template
       ansible.builtin.include_role:
-        name: proxmox_templates
+        name: bbaassssiiee.proxmox_templates
       tags:
         - template
