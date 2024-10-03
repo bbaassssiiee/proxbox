@@ -74,6 +74,9 @@ Vagrant.configure("2") do |config|
     ansible.galaxy_role_file = "ansible/collections/requirements.yml"
     ansible.galaxy_roles_path = "ansible/roles"
     ansible.verbose = "v"
+    ansible.groups = {
+      "proxmox" => ["pve"]
+    }
     end
   end
 end

@@ -1,0 +1,35 @@
+--
+# proxmox
+base_path: '/root'
+
+vm_templates:
+  - image_name: 'noble-server-cloudimg-amd64.img'
+    image_url: 'https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img'
+    image_state_desired: present
+    vm_state_desired: present
+    vm_id: 100
+    vm_name: 'ubuntu-noble-cloudinit-template'
+    vm_memory: 2048
+    vm_cores: 2
+    vm_bridge: 'vmbr1'
+    vm_storage: 'local-lvm'
+  - image_name: 'debian-12-genericcloud-amd64-20240901-1857.qcow2'
+    image_url: 'https://cloud.debian.org/images/cloud/bookworm/20240901-1857/debian-12-genericcloud-amd64-20240901-1857.qcow2'
+    image_state_desired: present
+    vm_state_desired: present
+    vm_id: 101
+    vm_name: 'debian-bookworm-cloudinit-template'
+    vm_memory: 2048
+    vm_cores: 2
+    vm_bridge: 'vmbr1'
+    vm_storage: 'local-lvm'
+  - image_name: 'AlmaLinux-8-GenericCloud-8.10-20240530.x86_64.qcow2'
+    image_url: 'https://repo.almalinux.org/almalinux/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-8.10-20240530.x86_64.qcow2'
+    image_state_desired: present
+    vm_state_desired: present
+    vm_id: 102
+    vm_name: 'almalinux-8-cloudinit-template'
+    vm_memory: 2048
+    vm_cores: 2
+    vm_bridge: 'vmbr1'
+    vm_storage: 'local-lvm'
