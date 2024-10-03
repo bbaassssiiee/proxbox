@@ -71,7 +71,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision :ansible do |ansible|
     ansible.compatibility_mode = "2.0"
     ansible.playbook = "ansible/provision-proxmox.yml"
-    ansible.galaxy_role_file = "ansible/roles/requirements.yml"
+    ansible.galaxy_role_file = "ansible/collections/requirements.yml"
     ansible.galaxy_roles_path = "ansible/roles"
     ansible.verbose = "v"
     end
